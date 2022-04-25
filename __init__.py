@@ -1,6 +1,5 @@
 from flask import Flask 
 from flask_sqlalchemy import SQLAlchemy
-import enum 
 from datetime import datetime
 from sqlalchemy_utils import  ChoiceType
 from flask_api import FlaskAPI

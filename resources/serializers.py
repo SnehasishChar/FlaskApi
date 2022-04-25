@@ -2,11 +2,13 @@
 from resources.models import *
 from flask_marshmallow import Marshmallow
 # from flask import DefaultSerializer
+from marshmallow import post_load,Schema,fields,EXCLUDE
 
 ma=Marshmallow()
 class rtdSerializer(ma.SQLAlchemyAutoSchema):
     class Meta:
         model=raw_tags_definition
+        # include_relationships = True
         load_instance=True
 
 class aggregated_tagsSerializer(ma.SQLAlchemyAutoSchema):
@@ -14,6 +16,8 @@ class aggregated_tagsSerializer(ma.SQLAlchemyAutoSchema):
         model=aggregated_tags
         load_instance=True
         include_fk = True
+        # transient = True
+       
 
 class aggregation_functionSerializer(ma.SQLAlchemyAutoSchema):
     class Meta:
