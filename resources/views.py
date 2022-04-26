@@ -1,3 +1,6 @@
+from select import select
+from tokenize import Name
+from webbrowser import get
 from flask import Flask,request, jsonify
 from flask_restful import Resource, Api, abort
 from flask_api import FlaskAPI
@@ -8,6 +11,8 @@ from .models import *
 from .serializers import *
 from flask_marshmallow import Marshmallow
 from marshmallow import ValidationError
+from sqlalchemy.sql import exists
+from flask import *
 app = FlaskAPI(__name__)
 
 
@@ -257,7 +262,7 @@ class Agree_Window_ViewSet1(Resource):
 
 # class Calculation_ViewSet(Resource):
 #     serializer_class = calculationSerializer
-#     queryset = calculated_channels.objects.all()
+#     queryset = calculated_channels.query.all()
 
 class Dashboard_ViewSet(Resource):
     def get(self):
@@ -321,7 +326,7 @@ class Dashboard_ViewSet1(Resource):
 # class data_display(viewsets.ViewSet):
 #     def data(self, request):
 #         pk = request.data.get('pk')
-#         query = calculated_channels.objects.filter(id=pk)
+#         query = calculated_channels.query.filter_by(id=pk)
 #         serialize = calculationSerializer(query, many=True)
 #         return Response(serialize.data)
 
@@ -365,9 +370,9 @@ class AggregatedChannelViewSet1(Resource):
             ag.ts=data['ts']
         else:
             a=Aggregated_Channel.query.get(id=id,**data)
-        db.session.add(a)
+        db.session.add(ag)
         db.session.commit()
-        result=ac.dump(a)
+        result=ac.dump(ag)
         return jsonify({'update record':result})
 
     def delete(self,id):
@@ -387,20 +392,149 @@ class CalculatedFormulaViewSet(Resource):
         ms=calculated_formulaSerializer(many=True)
         res=ms.dump(m)
         return jsonify({'calculation_formula':res})
+    def post(self):
+        data=request.get_json()
+        id=data['id']
+        formula_name =data['formula_name']
+        formula_title =data['formula_title']
+        cf=calculation_formula(id=id,formula_name=formula_name,formula_title=formula_title)
+        af=calculated_formulaSerializer()
+        db.session.add(cf)
+        db.session.commit()
+        dump_data = af.dump(cf)
+        return jsonify({'condition formula':dump_data})
 
+class CalculatedFormulaViewSet1(Resource):
+    def get(self,id):
+        m=calculation_formula.query.get(id)
+        ms=calculated_formulaSerializer()
+        if m:
+            res=ms.dump(m)
+            return jsonify({'calculation_formula':res})
+        else:
+            return jsonify({'message':'calculation_formula not found'})
+    def put(self,id):
+        data=request.get_json()
+        cf=calculation_formula.query.get(id)
+        cs=calculated_formulaSerializer()
+        if cf:
+            cf.id=data['id']
+            cf.formula_name =data['formula_name']
+            cf.formula_title =data['formula_title']
+        else:
+            cf=calculation_formula.query.get(id=id,**data)
+        db.session.add(cf)
+        db.session.commit()
+        result=cs.dump(cf)
+        return jsonify({'update record':result})
+
+    def delete(self,id):
+        a=calculation_formula.query.get(id)
+        if a:
+            db.session.delete(a)
+            db.session.commit() 
+            return jsonify({'delete':'sucess'}) 
+
+        else:
+            return {'message': 'calculation_formula not found'}
 class CalculatedConditionViewSet(Resource):
     def get(self):
-        cc=calculation_condition.query.first()
-        ccl=calculated_conditionSerializer()
+        cc=calculation_condition.query.all()
+        ccl=calculated_conditionSerializer(many=True)
         res=ccl.dump(cc)
         return jsonify({'cond_cl':res})
+    def post(self):
+        data=request.get_json()
+        id=data['id']
+        condition_name =data['condition_name']
+        condition_title =data['condition_title']
+        cc=calculation_condition(id=id,condition_name=condition_name,condition_title=condition_title)
+        cs=calculated_conditionSerializer()
+        db.session.add(cc)
+        db.session.commit()
+        dump_data = cs.dump(cc)
+        return jsonify({'calculate condition':dump_data}) 
+class CalculatedConditionViewSet1(Resource):
+    def get(self,id):
+        m=calculation_condition.query.get(id)
+        ms=calculated_conditionSerializer()
+        if m:
+            res=ms.dump(m)
+            return jsonify({'calculation_condition':res})
+        else:
+            return jsonify({'message':'calculation_formula not found'})
+    def put(self,id):
+        data=request.get_json()
+        cc=calculation_condition.query.get(id)
+        cs=calculated_conditionSerializer()
+        if cc:
+            cc.id=data['id']
+            cc.condition_name =data['condition_name']
+            cc.condition_title =data['condition_title']
+        else:
+            cc=calculation_condition.query.get(id=id,**data)
+        db.session.add(cc)
+        db.session.commit()
+        result=cs.dump(cc)
+        return jsonify({'update record':result})
 
+    def delete(self,id):
+        a=calculation_condition.query.get(id)
+        if a:
+            db.session.delete(a)
+            db.session.commit() 
+            return jsonify({'delete':'sucess'}) 
+        else:
+            return {'message': 'calculation_condition not found'}
 class formula_typeViewSet(Resource):
     def get(self):
         ft=formula_type.query.all()
         ff=formula_typeSerializer(many=True)
         res=ff.dump(ft)
         return jsonify({'formula':res})
+    def post(self):
+        data=request.get_json()
+        id=data['id']
+        Name=data['Name']
+        fl=formula_type(id=id,Name=Name)
+        fls=formula_typeSerializer()
+        db.session.add(fl)
+        db.session.commit()
+        dump_data = fls.dump(fl)
+        return jsonify({'formula_type':dump_data}) 
+
+class formula_typeViewSet1(Resource):
+    def get(self,id):
+        ft=formula_type.query.get(id)
+        ff=formula_typeSerializer()
+        if ff:
+            res=ff.dump(ft)
+            return jsonify({'formula':res})
+        else:
+            return jsonify({'message':'formula type not found'})
+    def put(self,id):
+        data=request.get_json()
+        ft=formula_type.query.get(id)
+        ff=formula_typeSerializer()
+        if ft:
+            ft.id=data['id']
+            ft.Name=data['Name']
+        else:
+            ft=formula_type.query.get(id=id,**data)
+        db.session.add(ft)
+        db.session.commit()
+        result=ff.dump(ft)
+        return jsonify({'update record':result})
+
+    def delete(self,id):
+        f=formula_type.query.get(id)
+        if f:
+            db.session.delete(f)
+            db.session.commit() 
+            return jsonify({'delete':'sucess'}) 
+        else:
+            return {'message': 'formula type not found'}
+    
 
 class formula_listViewSet(Resource):
     def get(self):
@@ -408,6 +542,55 @@ class formula_listViewSet(Resource):
         fls=formula_listSerializer(many=True)
         res=fls.dump(fl)
         return jsonify({'formula_list':res})
+
+    def post(self):
+        data=request.get_json()
+        id=data['id']
+        formula_type_id=data['formula_type_id']
+        Formula_id=data['Formula_id']
+        Name=data['Name']
+        aggregation_win_type=data['aggregation_win_type']
+        fl=formula_list(id=id,formula_type_id=formula_type_id,Formula_id=Formula_id,Name=Name,aggregation_win_type=aggregation_win_type)
+        fls=formula_listSerializer()
+        db.session.add(fl)
+        db.session.commit()
+        dump_data = fls.dump(fl)
+        return jsonify({'formula_list':dump_data}) 
+class formula_listViewSet1(Resource):
+    def get(self,id):
+        fl=formula_list.query.get(id)
+        fls=formula_listSerializer()
+        if fl:
+            res=fls.dump(fl)
+            return jsonify({'formula_list':res})
+        else:
+            return jsonify({'message':'formula list not found'})
+    def put(self,id):
+        data=request.get_json()
+        ft=formula_list.query.get(id)
+        ff=formula_listSerializer()
+        if ft:
+            ft.id=data['id']
+            ft.formula_type_id=data['formula_type_id']
+            ft.Formula_id=data['Formula_id']
+            ft.Name=data['Name']
+            ft.aggregation_win_type=data['aggregation_win_type']
+        else:
+            ft=formula_list.query.get(id=id,**data)
+        db.session.add(ft)
+        db.session.commit()
+        result=ff.dump(ft)
+        return jsonify({'update record':result})
+
+    def delete(self,id):
+        f=formula_list.query.get(id)
+        if f:
+            db.session.delete(f)
+            db.session.commit() 
+            return jsonify({'delete':'sucess'}) 
+        else:
+            return {'message': 'formula list not found'}
+
 
 class IFViewSet(Resource):
     def get(self):
@@ -422,6 +605,60 @@ class ConditionViewSet(Resource):
         cs=ConditionSerializer(many=True)
         res=cs.dump(c)
         return jsonify({'Condition':res})
+    def post(self):
+        data=request.get_json()
+        id=data['id']
+        Tag_id=data['Tag_id']
+        operator_id=data['operator_id']
+        value =data['value']
+        c=Condition(id=id,Tag_id=Tag_id,operator_id=operator_id,value=value)
+        cs=ConditionSerializer()
+        db.session.add(c)
+        db.session.commit()
+        dump_data = cs.dump(c)
+        return jsonify({'Condition':dump_data})
+
+class ConditionViewSet1(Resource):
+    def get(self,id):
+        c=Condition.query.get(id)
+        cs=ConditionSerializer()
+        if c:
+            res=cs.dump(c)
+            return jsonify({'Condition':res})
+        else:
+            return jsonify({'message':'formula list not found'})
+
+    def put(self,id):
+        data=request.get_json()
+        c=Condition.query.get(id)
+        cs=ConditionSerializer()
+        if c:
+            c.id=data['id']
+            c.Tag_id=data['Tag_id']
+            c.operator_id=data['operator_id']
+            c.value =data['value']
+        else:
+            c=Condition.query.get(id=id,**data)
+        db.session.add(c)
+        db.session.commit()
+        result=cs.dump(c)
+        return jsonify({'update record':result})
+
+    def delete(self,id):
+        f=Condition.query.get(id)
+        if f:
+            db.session.delete(f)
+            db.session.commit() 
+            return jsonify({'delete':'sucess'}) 
+        else:
+            return {'message': 'formula list not found'}
+
+class TagMasterView(Resource):
+    def get(self):
+        tag=Tag_Master.query.first()
+        tagm=tag_masterSerializer()
+        res=tagm.dump(tag)
+        return jsonify({'agg_fun':res})
 
 class SumViewSet(Resource):
     def get(self):
@@ -432,10 +669,7 @@ class SumViewSet(Resource):
         
     
 
-        return {
-            'status': True,
-            'tag_list': '{} added. Good'.format(args['tag_list'])
-            }
+        
 
 class MeanViewSet(Resource):
     def get(self):
@@ -458,10 +692,77 @@ class AverageViewSet(Resource):
         res=ca.dump(a)
         return jsonify({'Average':res})
 
-# class DashboardHomeSerializer(Resource):
-#     def get(self):
-#         m=DashboardHome.query.all()
-#         ms=DashboardHomeSerializer(many=True)
-#         res=ms.dump(m)
-#         return jsonify({'DashboardHome':res})
+class DashboardHomeView(Resource):
+    def get(self):
+        m=DashboardHome.query.all()
+        ms=DashboardHomeSerializer(many=True)
+        res=ms.dump(m)
+        return jsonify({'DashboardHome':res})
+
+
+def get_dashboard_home_details(an_item):
+    tags_value = an_item.Tag_list.split(",")
+    all_tag_name = []
+    y_label = []    
+    for tag in tags_value:
+        # print(Tag_Master.query.filter_by(id=int(tag), Agg_id=None, Calc_id=None).first())
+        if Tag_Master.query.filter_by(id=int(tag), Agg_id=None, Calc_id=None).first():
+            tag_data = Tag_Master.query.filter_by(id=int(tag), Agg_id=None, Calc_id=None).first()
+            raw_data = raw_tags_definition.query.filter_by(id=tag_data.Raw_id).first()
+            all_tag_name.append(raw_data.equipment_id + " / " + raw_data.parameter + " / " +
+                                raw_data.measurement_device + " (" + raw_data.channel_type + ") - " +
+                                raw_data.parameter_name)
+            y_label.append(tag_data.unit_of_measurement)
+        elif Tag_Master.query.filter_by(id=int(tag), Raw_id=None, Calc_id=None).first():
+            tag_data = Tag_Master.query.filter_by(id=int(tag)).first()
+            all_tag_name.append(tag_data.Agg_id.aggregated_tags_name)
+            y_label.append(tag_data.unit_of_measurement)
+        elif Tag_Master.query.filter_by(id=int(tag), Raw_id=None, Agg_id=None).first():
+            tag_data = Tag_Master.query.filter_by(id=int(tag)).first()
+            all_tag_name.append(tag_data.Calc_id.Name)
+            y_label.append(tag_data.unit_of_measurement)
+    
+    return({
+        "id": an_item.id, "Name": an_item.Name, "Tag_list": all_tag_name, "Chart_type": an_item.Chart_type,
+        "color": an_item.color, "dashboard": an_item.dashboard, "graph_id": an_item.graph_id, "y_label": y_label
+    })
+        
+class DashboardHomeView1(Resource):
+    def get(self):
+        try:
+            dashboard_id = dashboard_home_id = None
+            if request.args.get('search'):
+                dashboard_id = request.args.get('search')
+            if request.args.get('id'):
+                dashboard_home_id = request.args.get('id')
+            data = []
+            if request.args.get('id'):
+                if dashboard_home_id == '0':
+                    all_dashboard_home_data = DashboardHome.query.all()
+                    for an_item in all_dashboard_home_data:
+                            data.append(get_dashboard_home_details(an_item))
+                else:
+                    an_item = DashboardHome.query.filter_by(id=int(dashboard_home_id)).first()
+                    data.append(get_dashboard_home_details(an_item))
+            elif request.args.get('search'):
+                all_dashboard_home_data = DashboardHome.query.filter_by(dashboard=dashboard_id).all()
+                if all_dashboard_home_data:
+                    for an_item in all_dashboard_home_data:
+                        data.append(get_dashboard_home_details(an_item))
+                else:
+                    data.append({'message': 'No data found.'})
+            return jsonify({'data': data})
+        except Exception as e:
+            return jsonify({'message': 'No data found.', 'error': str(e)})
+
+        
+        results="'DashboardHome.query.filter_by(DashboardHome.Name.like('%'+search_fields+'%')).all()'"
+        ms=DashboardHomeSerializer(many=True)
+        if results: 
+            res=ms.dump(results)
+            return jsonify({'DashboardHome':res})
+        else:
+            return jsonify({'msg':'search fields not found'})
+    
+
 

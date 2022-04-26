@@ -28,7 +28,7 @@ class tag_masterSerializer(ma.SQLAlchemyAutoSchema):
     class Meta:
         model =Tag_Master
         load_instance=True
-        include_fk = True
+        # include_fk = True
 
 
 class tag_master_rawSerializer(ma.SQLAlchemyAutoSchema):

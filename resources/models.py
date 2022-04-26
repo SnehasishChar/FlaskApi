@@ -7,8 +7,21 @@ from flask_api import FlaskAPI
 
 app = FlaskAPI(__name__)
 # app = Flask(__name__)
+from sqlalchemy.engine import URL
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://VISHWAJIT\SQLEXPRESS/daskha?driver=SQL+Server'
+connection_url = URL.create(
+    "mssql+pyodbc",
+    # username="scott",
+    # password="tiger",
+    host="VISHWAJIT\SQLEXPRESS",
+    database="daskha",
+    query={
+        "driver": "ODBC Driver 17 for SQL Server",
+    },
+)
+app.config['SQLALCHEMY_DATABASE_URI'] = connection_url
+
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://VISHWAJIT\SQLEXPRESS/daskha?driver=SQL+Server'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
